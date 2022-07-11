@@ -1,0 +1,378 @@
+openapi: 3.0.1
+info:
+  title: HBO Max Affiliate integration API
+  version: 1.2.3
+tags:
+  - name: Registration
+  - name: Subscription
+paths:
+  /registration/validate:
+    post:
+      tags:
+        - Registration
+      summary: Validates the customer identifiers on B2B Affiliate side for HBO registration
+      operationId: validate registration
+      parameters:
+        - name: X-content-hmac-sha512
+          in: header
+          description: HMAC_SHA512
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Registration object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateRegistrationRequest'
+        required: true
+      responses:
+        200:
+          description: Valid customer identifiers for HBO registration
+          headers:
+            X-content-hmac-sha512:
+              schema:
+                type: string
+              required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateRegistrationResponse'
+        400:
+          description: Invalid hash | Invalid customer identifiers
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: Customer | Subscription not found
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        410:
+          description: Subscription expired
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Server error
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: body
+  /registration/commit:
+    post:
+      tags:
+        - Registration
+      summary: Notifies the B2B Affiliate about successful customer registration on HBO side
+      operationId: commit registration
+      parameters:
+        - name: X-content-hmac-sha512
+          in: header
+          description: HMAC_SHA512
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Registration object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommitRegistrationRequest'
+      responses:
+        200:
+          description: Notification is processed
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommitRegistrationResponse'
+        400:
+          description: Invalid hash
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: Customer | Subscription | Registration not found
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        410:
+          description: Subscription expired
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Server error
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /subscription/validate:
+    post:
+      tags:
+        - Subscription
+      summary: Validates already registered customer's HBO subscription on B2B Affiliate side
+      operationId: validate subscription
+      parameters:
+        - name: X-content-hmac-sha512
+          in: header
+          description: HMAC_SHA512
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Subscription object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateSubscriptionRequest'
+        required: true
+      responses:
+        200:
+          description: Customer has valid HBO subscription
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateSubscriptionResponse'
+        400:
+          description: Invalid hash
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: Customer | Subscription not found
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        410:
+          description: Subscription expired
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Server error
+          headers:
+            X-content-hmac-sha256:
+              schema:
+                type: string
+              required: true
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    oAuthSample:
+      type: oauth2
+      description: This API uses OAuth 2 with the implicit grant flow. [More info](https://api.example.com/docs/auth)
+      flows:
+        implicit:
+          authorizationUrl: https://localhost:8080/oauth2/authorize
+          scopes:
+            read: read customer subscription information
+            write: commit customer registration
+  schemas:
+    ValidateRegistrationRequest:
+      type: object
+      required:
+        - timestamp
+        - customerIdentifier
+      properties:
+        timestamp:
+          type: string
+          #format: date-time
+          example: "2021-01-30T08:30:00Z"
+          description: Timestamp in UTC, in yyyy-MM-dd'T'HH:mm:ss'Z' format
+        customerIdentifier:
+          type: string
+          example: "fe6e1045-0f54-4d5b-9935-921012616301"
+        secondaryCustomerIdentifier:
+          type: string
+          example: AAA123
+    CommitRegistrationRequest:
+      type: object
+      required:
+        - timestamp
+        - registrationId
+        - operatorReference
+      properties:
+        timestamp:
+          type: string
+          #format: date-time
+          example: "2021-01-30T08:30:00Z"
+          description: Timestamp in UTC, in yyyy-MM-dd'T'HH:mm:ss'Z' format
+        registrationId:
+          type: string
+          description: Identifier of the registration
+          example: "fe6e1045-0f54-4d5b-9935-921012616301"
+        operatorReference:
+          type: string
+          example: "fe6e1045-0f54-4d5b-9935-921012616301"
+    CommitRegistrationResponse:
+      type: object
+      required:
+        - timestamp
+      properties:
+        timestamp:
+          type: string
+          #format: date-time
+          example: "2021-01-30T08:30:00Z"
+          description: Timestamp in UTC, in yyyy-MM-dd'T'HH:mm:ss'Z' format
+    ValidateSubscriptionRequest:
+      type: object
+      required:
+        - timestamp
+        - operatorReference
+      properties:
+        timestamp:
+          type: string
+          #format: date-time
+          example: "2021-01-30T08:30:00Z"
+          description: Timestamp in UTC, in yyyy-MM-dd'T'HH:mm:ss'Z' format
+        operatorReference:
+          type: string
+          example: "ecbd5061-38eb-4b9a-912a-bb7669dfd9c6"
+    ValidateSubscriptionResponse:
+      type: object
+      required:
+        - timestamp
+      properties:
+        timestamp:
+          type: string
+          #format: date-time
+          example: "2021-01-30T08:30:00Z"
+          description: Timestamp in UTC, in yyyy-MM-dd'T'HH:mm:ss'Z' format
+        skus:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sku'
+    ValidateRegistrationResponse:
+      allOf:
+        - $ref: '#/components/schemas/ValidateSubscriptionResponse'
+        - type: object
+      type: object
+      required:
+        - operatorReference
+      properties:
+        operatorReference:
+          type: string
+          example: "ecbd5061-38eb-4b9a-912a-bb7669dfd9c6"
+        registrationId:
+          type: string
+          description: Identifier of the registration
+          example: "fe6e1045-0f54-4d5b-9935-921012616301"
+    Sku:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "HBO_MAX_Tier_1"
+        subscriptionExpiry:
+          type: string
+          #format: date-time
+          example: "2021-01-30T08:30:00Z"
+          description: Timestamp in UTC, in yyyy-MM-dd'T'HH:mm:ss'Z' format
+    ErrorResponse:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+      properties:
+        type:
+          type: string
+          example: urn:sb:errors:customer-not-found
+        title:
+          type: string
+          example: Customer not found
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: Customer not found for 32131241 contractNumber.
+security:
+  - basicAuth: []
+  - oAuthSample:
+      - write
+      - read
